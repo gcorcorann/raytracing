@@ -28,6 +28,11 @@ float dot(Vector a, Vector b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+Vector mul(Vector a, Vector b) {
+    Vector r = {a.x * b.x, a.y * b.y, a.z * b.z};
+    return r;
+}
+
 Vector sub(Vector a, Vector b) {
     Vector r = {a.x - b.x, a.y - b.y, a.z - b.z};
     return r;
@@ -91,8 +96,29 @@ Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
     Vector l = sub(light.p, p);
     l = scale(l, 1 / norm(l));
     float r = (dot(n, l) > 0) ? dot(n, l) : 0;  // illumination proportion
-    Vector d = {s.x * light.i.x * r, s.y * light.i.y * r, s.z * light.i.z * r};
-    return d;
+    Vector dc = {s.x * light.i.x * r, s.y * light.i.y * r, s.z * light.i.z * r};  // diffuse component
+    return scale(mul(s, light.i), r);
+}
+
+/*
+ * n surface normal
+ * p surface hit position
+ * s surface colour
+ */
+Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
+    Vector v = unit(sub(ray.o, p));
+    Vector l = unit(sub(light.p, p));
+    Vector h = unit(add(v, l));
+    float r = (dot(n, h) > 0) ? std::pow(dot(n, h), 25) : 0;  // illumination proportion
+    return scale(mul(s, light.i), r);
+}
+
+/*
+ * s surface ambient colour
+ * i ambient light intensity
+ */
+Vector ambientShading(Vector s, Vector i) {
+    return scale(mul(s, i), 0.25);  // TODO scaling for now
 }
 
 int main() {
@@ -107,12 +133,11 @@ int main() {
     Vector img [height][width];  // RGB image
     Ray ray;  // viewing ray
     // centre, radius, colour
-    Sphere spheres [] = {{30, 30, -300, 30, 0.5, 0.5, 0.5},
-                         {50, 50, -400, 30, 0.5, 0, 0},
+    Sphere spheres [] = {{30, 30, -300, 30, 0.85, 0.85, 0.85},
+                         {50, 50, -400, 20, 1, 0, 0},
                          {-40, -40, -300, 40, 0, 1, 0}};
     
-
-    Light light = {0, 10, 0, 1, 1, 1};  // loc, colour
+    Light light = {220, 10, 0, 1, 1, 1};  // loc, colour
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             computeViewingRay(i, j, width, height, l, r, t, b, focal_length, ray);
@@ -133,14 +158,35 @@ int main() {
                     hit_norm = n;
                 }
             }
-            if (hit)
-                img[j][i] = lambertianShading(hit_norm, light, hit_position, hit_sphere.s);  // diffuse colour
-            else
+            if (hit) {
+                // diffuse + specular
+                img[j][i] = add(add(lambertianShading(hit_norm, light, hit_position, hit_sphere.s), blinnPhongShading(hit_norm, light, hit_position, hit_sphere.s, ray)), ambientShading(hit_sphere.s, light.i));
+            }
+            else {
                 img[j][i] = {0, 0, 0};
+            }
+        }
+    }
+    // normalize image
+    float max = 0;
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            float m = (img[height-1-j][i].x > img[height-1-j][i].y) ? img[height-1-j][i].x : img[height-1-j][i].y;
+            m = (m > img[height-1-j][i].z) ? m : img[height-1-j][i].z;
+            if (m > max) {
+                max = m;
+            }
+        }
+    }
+    if (max != 0) {
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                img[height-1-j][i] = {img[height-1-j][i].x / max, img[height-1-j][i].y / max, img[height-1-j][i].z / max};
+            }
         }
     }
     std::ofstream file;
-    file.open("out.ppm");
+    file.open("out.ppm", std::ios::binary);
     file << "P6\n" << width << " " << height << "\n255\n";
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
