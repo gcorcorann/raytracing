@@ -137,7 +137,9 @@ int main() {
                          {50, 50, -400, 20, 1, 0, 0},
                          {-40, -40, -300, 40, 0, 1, 0}};
     
-    Light light = {220, 10, 0, 1, 1, 1};  // loc, colour
+    // loc, colour
+    Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5},
+                       {-1020, -310, 0, 0.5, 0.5, 0.5}};
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             computeViewingRay(i, j, width, height, l, r, t, b, focal_length, ray);
@@ -160,7 +162,12 @@ int main() {
             }
             if (hit) {
                 // diffuse + specular
-                img[j][i] = add(add(lambertianShading(hit_norm, light, hit_position, hit_sphere.s), blinnPhongShading(hit_norm, light, hit_position, hit_sphere.s, ray)), ambientShading(hit_sphere.s, light.i));
+                Vector L = {0, 0, 0};
+                for (int k = 0; k < sizeof(lights) / sizeof(*lights); k++) {
+                    L = add(L, add(lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s), blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray)));
+                }
+                // use first light as ambient
+                img[j][i] = add(L, ambientShading(hit_sphere.s, lights[0].i));
             }
             else {
                 img[j][i] = {0, 0, 0};
