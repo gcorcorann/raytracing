@@ -2,11 +2,7 @@
 #include <iostream>
 #include <cmath>
 
-struct Vector {
-    float x;
-    float y;
-    float z;
-};
+#include "vector.h"
 
 struct Sphere {
     Vector c;  // centre
@@ -23,38 +19,6 @@ struct Light {
     Vector p;  // position
     Vector i;  // intensity
 };
-
-float dot(Vector a, Vector b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-Vector mul(Vector a, Vector b) {
-    Vector r = {a.x * b.x, a.y * b.y, a.z * b.z};
-    return r;
-}
-
-Vector sub(Vector a, Vector b) {
-    Vector r = {a.x - b.x, a.y - b.y, a.z - b.z};
-    return r;
-}
-
-Vector add(Vector a, Vector b) {
-    Vector r = {a.x + b.x, a.y + b.y, a.z + b.z};
-    return r;
-}
-
-Vector scale(Vector a, float t) {
-    Vector r = {a.x * t, a.y * t, a.z * t};
-    return r;
-}
-
-float norm(Vector a) {
-    return sqrt(dot(a, a));
-}
-
-Vector unit(Vector a) {
-    return scale(a, 1 / norm(a));
-}
 
 void pixelImagePlane(int i, int j, int nx, int ny, float l, float r, float t, float b, float& u, float& v) {
     u = l + (r - l) * ((float) i + 0.5) / (float) nx;
@@ -79,13 +43,13 @@ void computeViewingRay(int i, int j, int nx, int ny, float l, float r, float t, 
 }
 
 bool sphereIntersection(Sphere s, Ray r, Vector& n, Vector& p, float& t) {
-    float d = sqrt(dot(r.d, sub(r.o, s.c)) * dot(r.d, sub(r.o, s.c)) - dot(r.d, r.d) * (dot(sub(r.o, s.c), sub(r.o, s.c)) - s.r * s.r));
+    float d = sqrt(r.o.sub(s.c).dot(r.d) * r.o.sub(s.c).dot(r.d) - r.d.dot(r.d) * (r.o.sub(s.c).dot(r.o.sub(s.c)) - s.r * s.r));
     if (d >= 0) {
-        float tp = (-dot(r.d, sub(r.o, s.c)) + d) / dot(r.d, r.d);
-        float tn = (-dot(r.d, sub(r.o, s.c)) - d) / dot(r.d, r.d);
+        float tp = (-r.o.sub(s.c).dot(r.d) + d) / r.d.dot(r.d);
+        float tn = (-r.o.sub(s.c).dot(r.d) - d) / r.d.dot(r.d);
         t = (tp < tn) ? tp : tn;
-        p = add(r.o, scale(r.d, t));
-        n = unit(sub(p, s.c));
+        p = r.o.add(r.d.scale(t));
+        n = p.sub(s.c).unit();
         return true;
     }
     else 
@@ -93,11 +57,11 @@ bool sphereIntersection(Sphere s, Ray r, Vector& n, Vector& p, float& t) {
 }
 
 Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
-    Vector l = sub(light.p, p);
-    l = scale(l, 1 / norm(l));
-    float r = (dot(n, l) > 0) ? dot(n, l) : 0;  // illumination proportion
+    Vector l = light.p.sub(p);
+    l = l.scale(1 / l.norm());
+    float r = (n.dot(l) > 0) ? n.dot(l) : 0;  // illumination proportion
     Vector dc = {s.x * light.i.x * r, s.y * light.i.y * r, s.z * light.i.z * r};  // diffuse component
-    return scale(mul(s, light.i), r);
+    return s.mul(light.i).scale(r);
 }
 
 /*
@@ -106,11 +70,11 @@ Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
  * s surface colour
  */
 Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
-    Vector v = unit(sub(ray.o, p));
-    Vector l = unit(sub(light.p, p));
-    Vector h = unit(add(v, l));
-    float r = (dot(n, h) > 0) ? std::pow(dot(n, h), 25) : 0;  // illumination proportion
-    return scale(mul(s, light.i), r);
+    Vector v = ray.o.sub(p).unit();
+    Vector l = light.p.sub(p).unit();
+    Vector h = v.add(l).unit();
+    float r = (n.dot(h) > 0) ? std::pow(n.dot(h), 25) : 0;  // illumination proportion
+    return s.mul(light.i).scale(r);
 }
 
 /*
@@ -118,7 +82,7 @@ Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
  * i ambient light intensity
  */
 Vector ambientShading(Vector s, Vector i) {
-    return scale(mul(s, i), 0.25);  // TODO scaling for now
+    return s.mul(i).scale(0.25);  // TODO scaling for now
 }
 
 int main() {
@@ -133,10 +97,9 @@ int main() {
     Vector img [height][width];  // RGB image
     Ray ray;  // viewing ray
     // centre, radius, colour
-    Sphere spheres [] = {{30, 30, -300, 30, 0.85, 0.85, 0.85},
-                         {50, 50, -400, 20, 1, 0, 0},
-                         {-40, -40, -300, 40, 0, 1, 0}};
-    
+    Sphere spheres [] = {{30, 30, -300, 30, 0.4, 0.4, 0.4},
+                         {50, 50, -400, 20, 0.3, 0.3, 0.3},
+                         {-40, -40, -300, 40, 0.25, 0.25, 0.25}};
     // loc, colour
     Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5},
                        {-1020, -310, 0, 0.5, 0.5, 0.5}};
@@ -164,13 +127,14 @@ int main() {
                 // diffuse + specular
                 Vector L = {0, 0, 0};
                 for (int k = 0; k < sizeof(lights) / sizeof(*lights); k++) {
-                    L = add(L, add(lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s), blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray)));
+                    L = L.add((lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s).add(blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray))));
                 }
                 // use first light as ambient
-                img[j][i] = add(L, ambientShading(hit_sphere.s, lights[0].i));
+                img[j][i] = L.add(ambientShading(hit_sphere.s, lights[0].i));
             }
             else {
-                img[j][i] = {0, 0, 0};
+                float bg = (float)(height - j) / (height * 3);
+                img[j][i] = {bg, bg, bg};
             }
         }
     }
