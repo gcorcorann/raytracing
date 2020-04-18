@@ -38,7 +38,7 @@ Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
     l = l.scale(1 / l.norm());
     float r = (n.dot(l) > 0) ? n.dot(l) : 0;  // illumination proportion
     Vector dc = {s.x * light.i.x * r, s.y * light.i.y * r, s.z * light.i.z * r};  // diffuse component
-    return s.mul(light.i).scale(r);
+    return (s * light.i).scale(r);
 }
 
 /*
@@ -51,7 +51,7 @@ Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
     Vector l = (light.p - p).unit();
     Vector h = (v + l).unit();
     float r = (n.dot(h) > 0) ? std::pow(n.dot(h), 25) : 0;  // illumination proportion
-    return s.mul(light.i).scale(r);
+    return (s * light.i).scale(r);
 }
 
 /*
@@ -59,7 +59,7 @@ Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
  * i ambient light intensity
  */
 Vector ambientShading(Vector s, Vector i) {
-    return s.mul(i).scale(0.25);  // TODO scaling for now
+    return (s * i).scale(0.25);  // TODO scaling for now
 }
 
 int main() {
