@@ -6,11 +6,7 @@
 #include "sphere.h"
 #include "ray.h"
 #include "image.h"
-
-struct Light {
-    Vector p;  // position
-    Vector i;  // intensity
-};
+#include "light.h"
 
 void pixelImagePlane(int i, int j, int nx, int ny, float l, float r, float t, float b, float& u, float& v) {
     u = l + (r - l) * ((float) i + 0.5) / (float) nx;
