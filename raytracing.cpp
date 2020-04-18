@@ -62,16 +62,48 @@ Vector ambientShading(Vector s, Vector i) {
     return (s * i).scale(0.25);  // TODO scaling for now
 }
 
+void writeImage(Vector* img, int width, int height) {
+    std::ofstream file;
+    file.open("out.ppm", std::ios::binary);
+    file << "P6\n" << width << " " << height << "\n255\n";
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            file << (char)(255 * img[(height-1-j)*width+i].x);
+            file << (char)(255 * img[(height-1-j)*width+i].y);
+            file << (char)(255 * img[(height-1-j)*width+i].z);
+        }
+    }
+    file.close();
+}
+
+void normalizeImage(Vector* img, int width, int height) {
+    float max = 0;
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            float m = (img[j*width+i].x > img[j*width+i].y) ? img[j*width+i].x : img[j*width+i].y;
+            m = (m > img[j*width+i].z) ? m : img[j*width+i].z;
+            max = (max > m) ? max : m;
+        }
+    }
+    if (max != 0) {  // TODO this might be changed to (max > 1)
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                img[j*width+i] = {img[j*width+i].x / max, img[j*width+i].y / max, img[j*width+i].z / max};
+            }
+        }
+    }
+}
+
 int main() {
-    const int width = 800;
-    const int height = 640;
+    const int width = 1280;
+    const int height = 720;
     float focal_length = 200;  // only for perspective projection
     // image plane location
-    float r = 100;
+    float r = 200;
+    float t = 150;
     float l = -r;
-    float t = r;
-    float b = l;
-    Vector img [height][width];  // RGB image
+    float b = -t;
+    Vector* img = new Vector [width * height];  // rgb image
     Ray ray;  // viewing ray
     // centre, radius, colour
     Sphere spheres [] = {{30, 30, -300, 30, 1, 0, 0},
@@ -107,42 +139,16 @@ int main() {
                     L = L + lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s) + blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray);
                 }
                 // use first light as ambient
-                img[j][i] = L + ambientShading(hit_sphere.s, lights[0].i);
+                img[j*width+i] = L + ambientShading(hit_sphere.s, lights[0].i);
             }
             else {
                 float bg = (float)(height - j) / (height * 3);
-                img[j][i] = {bg, bg, bg};
+                img[j*width+i] = {bg, bg, bg};
             }
         }
     }
-    // normalize image
-    float max = 0;
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
-            float m = (img[height-1-j][i].x > img[height-1-j][i].y) ? img[height-1-j][i].x : img[height-1-j][i].y;
-            m = (m > img[height-1-j][i].z) ? m : img[height-1-j][i].z;
-            if (m > max) {
-                max = m;
-            }
-        }
-    }
-    if (max != 0) {
-        for (int j = 0; j < height; j++) {
-            for (int i = 0; i < width; i++) {
-                img[height-1-j][i] = {img[height-1-j][i].x / max, img[height-1-j][i].y / max, img[height-1-j][i].z / max};
-            }
-        }
-    }
-    std::ofstream file;
-    file.open("out.ppm", std::ios::binary);
-    file << "P6\n" << width << " " << height << "\n255\n";
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
-            file << (char)(255 * img[height - 1 - j][i].x);
-            file << (char)(255 * img[height - 1 - j][i].y);
-            file << (char)(255 * img[height - 1 - j][i].z);
-        }
-    }
-    file.close();
+    normalizeImage(img, width, height);
+    writeImage(img, width, height);
+    delete[] img;
     return 0;
 }
