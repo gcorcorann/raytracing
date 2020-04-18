@@ -4,6 +4,7 @@
 
 #include "vector.h"
 #include "sphere.h"
+#include "triangle.h"
 #include "ray.h"
 #include "image.h"
 #include "light.h"
@@ -14,7 +15,7 @@ void pixelImagePlane(int i, int j, int nx, int ny, float l, float r, float t, fl
 }
 
 void perspectiveProjection(float u, float v, float f, Ray& r) {
-    r.o = {0, 0, 0};
+    r.o = {0, 30, 0};
     r.d = {u, v, -f};
 }
 
@@ -39,7 +40,7 @@ void computeViewingRay(int i, int j, int nx, int ny, float l, float r, float t, 
     float u;
     float v;
     pixelImagePlane(i, j, nx, ny, l, r, t, b, u, v);
-    orthographicProjection(u, v, f, ray);
+    perspectiveProjection(u, v, f, ray);
 }
 
 /*
@@ -81,16 +82,17 @@ int main() {
     const int height = 720;
     float focal_length = 200;  // only for perspective projection
     // image plane location
-    float r = 200;
-    float t = 150;
+    float r = 200 / 1.5;
+    float t = 150 / 1.5;
     float l = -r;
     float b = -t;
     Image img = {width, height};  // rgb image
     Ray ray;  // viewing ray
     // centre, radius, colour
-    Sphere spheres [] = {{30, 30, -300, 30, 1, 0, 0},
-                         {50, 50, -400, 20, 1, 1, 1},
-                         {-40, -40, -300, 40, 0, 0, 1}};
+    Sphere spheres [] = {{30, 50, -300, 30, 1, 0, 0},
+                         {80, 100, -400, 20, 1, 1, 1},
+                         {-40, -20, -300, 40, 0, 0, 1}};
+    Triangle triangle = {-100, 0, 0, 100, 0, 0, 0, 0, -100, 0, 1, 0};
     // loc, colour
     Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5},
                        {-1020, -310, 0, 0.5, 0.5, 0.5}};

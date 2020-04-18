@@ -24,7 +24,8 @@ class Sphere {
                 n = (p - c).unit();
                 return true;
             }
-            else 
+            else {
                 return false;
+            }
         }
 };
