@@ -27,6 +27,18 @@ void orthographicProjection(float u, float v, float f, Ray& r) {
     r.d = {0, 0, -1};
 }
 
+/*
+ * i pixel location (x)
+ * j pixel location (y)
+ * nx number of pixels (x)
+ * ny number of pixels (y)
+ * l left image plane location
+ * r right image plane location
+ * t top image plane location
+ * b bottom image plane location
+ * f focal length
+ * ray viewing ray
+ */
 void computeViewingRay(int i, int j, int nx, int ny, float l, float r, float t, float b, float f, Ray& ray) {
     float u;
     float v;
@@ -34,6 +46,11 @@ void computeViewingRay(int i, int j, int nx, int ny, float l, float r, float t, 
     orthographicProjection(u, v, f, ray);
 }
 
+/*
+ * n surface normal
+ * p surface hit position
+ * s surface colour
+ */
 Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
     Vector l = light.p - p;
     l = l.scale(1 / l.norm());
@@ -62,7 +79,6 @@ Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
 Vector ambientShading(Vector s, Vector i) {
     return (s * i).scale(0.25);  // TODO scaling for now
 }
-
 
 int main() {
     const int width = 1280;
