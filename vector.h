@@ -24,4 +24,12 @@ class Vector {
         }
         float norm() { return sqrt(dot(*this)); }
         Vector unit() { return scale(1 / norm()); }
+        Vector operator+ (Vector o) {
+            Vector r = {o.x + x, o.y + y, o.z + z};
+            return r;
+        }
+        Vector operator- (Vector o) {
+            Vector r = {x - o.x, y - o.y, z - o.z};
+            return r;
+        }
 };

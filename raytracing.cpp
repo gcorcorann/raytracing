@@ -3,17 +3,8 @@
 #include <cmath>
 
 #include "vector.h"
-
-struct Sphere {
-    Vector c;  // centre
-    float r;  // radius
-    Vector s;  // surface colour
-};
-
-struct Ray {
-    Vector o;  // origin
-    Vector d;  // diriection
-};
+#include "sphere.h"
+#include "ray.h"
 
 struct Light {
     Vector p;  // position
@@ -42,22 +33,8 @@ void computeViewingRay(int i, int j, int nx, int ny, float l, float r, float t, 
     orthographicProjection(u, v, f, ray);
 }
 
-bool sphereIntersection(Sphere s, Ray r, Vector& n, Vector& p, float& t) {
-    float d = sqrt(r.o.sub(s.c).dot(r.d) * r.o.sub(s.c).dot(r.d) - r.d.dot(r.d) * (r.o.sub(s.c).dot(r.o.sub(s.c)) - s.r * s.r));
-    if (d >= 0) {
-        float tp = (-r.o.sub(s.c).dot(r.d) + d) / r.d.dot(r.d);
-        float tn = (-r.o.sub(s.c).dot(r.d) - d) / r.d.dot(r.d);
-        t = (tp < tn) ? tp : tn;
-        p = r.o.add(r.d.scale(t));
-        n = p.sub(s.c).unit();
-        return true;
-    }
-    else 
-        return false;
-}
-
 Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
-    Vector l = light.p.sub(p);
+    Vector l = light.p - p;
     l = l.scale(1 / l.norm());
     float r = (n.dot(l) > 0) ? n.dot(l) : 0;  // illumination proportion
     Vector dc = {s.x * light.i.x * r, s.y * light.i.y * r, s.z * light.i.z * r};  // diffuse component
@@ -70,9 +47,9 @@ Vector lambertianShading(Vector n, Light light, Vector p, Vector s) {
  * s surface colour
  */
 Vector blinnPhongShading(Vector n, Light light, Vector p, Vector s, Ray ray) {
-    Vector v = ray.o.sub(p).unit();
-    Vector l = light.p.sub(p).unit();
-    Vector h = v.add(l).unit();
+    Vector v = (ray.o - p).unit();
+    Vector l = (light.p - p).unit();
+    Vector h = (v + l).unit();
     float r = (n.dot(h) > 0) ? std::pow(n.dot(h), 25) : 0;  // illumination proportion
     return s.mul(light.i).scale(r);
 }
@@ -97,9 +74,9 @@ int main() {
     Vector img [height][width];  // RGB image
     Ray ray;  // viewing ray
     // centre, radius, colour
-    Sphere spheres [] = {{30, 30, -300, 30, 0.4, 0.4, 0.4},
-                         {50, 50, -400, 20, 0.3, 0.3, 0.3},
-                         {-40, -40, -300, 40, 0.25, 0.25, 0.25}};
+    Sphere spheres [] = {{30, 30, -300, 30, 1, 0, 0},
+                         {50, 50, -400, 20, 1, 1, 1},
+                         {-40, -40, -300, 40, 0, 0, 1}};
     // loc, colour
     Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5},
                        {-1020, -310, 0, 0.5, 0.5, 0.5}};
@@ -115,7 +92,7 @@ int main() {
             Vector hit_norm;
             bool hit = false;
             for (int k = 0; k < sizeof(spheres) / sizeof(*spheres); k++) {
-                if (sphereIntersection(spheres[k], ray, n, p, t) && (!hit || t < min_t)) {
+                if (spheres[k].hit(ray, n, p, t) && (!hit || t < min_t)) {
                     hit = true;
                     min_t = t;
                     hit_sphere = spheres[k];
@@ -127,10 +104,10 @@ int main() {
                 // diffuse + specular
                 Vector L = {0, 0, 0};
                 for (int k = 0; k < sizeof(lights) / sizeof(*lights); k++) {
-                    L = L.add((lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s).add(blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray))));
+                    L = L + lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s) + blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray);
                 }
                 // use first light as ambient
-                img[j][i] = L.add(ambientShading(hit_sphere.s, lights[0].i));
+                img[j][i] = L + ambientShading(hit_sphere.s, lights[0].i);
             }
             else {
                 float bg = (float)(height - j) / (height * 3);
