@@ -1,14 +1,19 @@
 #pragma once
 #include "vector.h"
 #include "ray.h"
+#include "surface.h"
 
-class Triangle {
+class Triangle : public Surface {
     public:
         Vector v1;  // vertex position
         Vector v2;
         Vector v3;
-        Vector s;  // surface colour
-
+        Triangle(Vector a, Vector b, Vector c, Vector sc) {
+            v1 = a;
+            v2 = b;
+            v3 = c;
+            s = sc;
+        }
         /*
          * r viewing ray
          * n surface normal

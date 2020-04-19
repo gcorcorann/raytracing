@@ -1,13 +1,17 @@
 #pragma once
 #include "vector.h"
 #include "ray.h"
+#include "surface.h"
 
-class Sphere {
+class Sphere : public Surface {
     public:
         Vector c;  // centre
         float r;   // radius
-        Vector s;  // surface colour
-
+        Sphere(Vector centre, float radius, Vector sc) {
+            c = centre;
+            r = radius;
+            s = sc;
+        }
         /*
          * r viewing ray
          * n surface normal

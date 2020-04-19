@@ -89,13 +89,14 @@ int main() {
     Image img = {width, height};  // rgb image
     Ray ray;  // viewing ray
     // centre, radius, colour
-    Sphere spheres [] = {{30, 50, -300, 30, 1, 0, 0},
-                         {80, 100, -400, 20, 1, 1, 1},
-                         {-40, -20, -300, 40, 0, 0, 1}};
-    Triangle triangle = {-100, 0, 0, 100, 0, 0, 0, 0, -100, 0, 1, 0};
+    Sphere spheres [] = {{{30, 30, -300}, 30, {1, 0, 0}},
+                         {{80, 20, -400}, 20, {1, 1, 1}},
+                         {{-40, 40, -300}, 40, {0, 0, 1}}};
+    // v1, v2, v3, colour
+    Triangle triangle = {{-20000, 0, -20000}, {20000, 0, -20000}, {0, 0, 20000}, {0.5, 0.5, 0.5}};
+    Surface* surfaces [] = {&triangle, &spheres[0], &spheres[1], &spheres[2]};
     // loc, colour
-    Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5},
-                       {-1020, -310, 0, 0.5, 0.5, 0.5}};
+    Light lights [] = {{320, 300, 0, 0.5, 0.5, 0.5}, {-320, 300, 0, 0.5, 0.5, 0.5}};
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
             computeViewingRay(i, j, width, height, l, r, t, b, focal_length, ray);
@@ -103,15 +104,15 @@ int main() {
             Vector p;  // surface hit point
             float t;  // intersection
             float min_t = -1;
-            Sphere hit_sphere;
+            Surface hit_surface;
             Vector hit_position;
             Vector hit_norm;
             bool hit = false;
-            for (int k = 0; k < sizeof(spheres) / sizeof(*spheres); k++) {
-                if (spheres[k].hit(ray, n, p, t) && (!hit || t < min_t)) {
+            for (int k = 0; k < sizeof(surfaces) / sizeof(*surfaces); k++) {
+                if (surfaces[k]->hit(ray, n, p, t) && (!hit || t < min_t)) {
                     hit = true;
                     min_t = t;
-                    hit_sphere = spheres[k];
+                    hit_surface = *surfaces[k];
                     hit_position = p;
                     hit_norm = n;
                 }
@@ -120,14 +121,13 @@ int main() {
                 // diffuse + specular
                 Vector L = {0, 0, 0};
                 for (int k = 0; k < sizeof(lights) / sizeof(*lights); k++) {
-                    L = L + lambertianShading(hit_norm, lights[k], hit_position, hit_sphere.s) + blinnPhongShading(hit_norm, lights[k], hit_position, hit_sphere.s, ray);
+                    L = L + lambertianShading(hit_norm, lights[k], hit_position, hit_surface.s) + blinnPhongShading(hit_norm, lights[k], hit_position, hit_surface.s, ray);
                 }
                 // use first light as ambient
-                *img[j*width+i] = L + ambientShading(hit_sphere.s, lights[0].i);
+                *img[j*width+i] = L + ambientShading(hit_surface.s, lights[0].i);
             }
             else {
-                float bg = (float)(height - j) / (height * 3);
-                *img[j*width+i] = {bg, bg, bg};
+                *img[j*width+i] = {0, 0, 0};
             }
         }
     }
