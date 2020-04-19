@@ -26,7 +26,12 @@ class Sphere : public Surface {
                 t = (tp < tn) ? tp : tn;
                 p = r.o + r.d.scale(t);
                 n = (p - c).unit();
-                return true;
+                if (t >= 0) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
             }
             else {
                 return false;

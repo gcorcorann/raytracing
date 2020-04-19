@@ -1,7 +1,5 @@
 # RayTracing
 ## TODO
-* Optimize the vector operations with inplace operations
-* Add triangle rendering
+* Optimize vector operations with inplace operations
 * Add polygon rendering
-* Add groundplane
-* Add shading
+* Add normal for triangle
