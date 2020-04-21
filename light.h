@@ -1,6 +1,6 @@
 #pragma once
 
 struct Light {
-    Vector p;  // position
-    Vector i;  // intensity
+    Vector position;
+    float intensity;
 };

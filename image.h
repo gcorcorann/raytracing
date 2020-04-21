@@ -7,6 +7,7 @@ class Image {
         int width;
         int height;
         Vector* framebuffer = nullptr;
+
         Image(int w, int h) {
             width = w;
             height = h;
