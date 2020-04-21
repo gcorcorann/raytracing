@@ -191,20 +191,17 @@ bool sceneIntersect(Ray ray, Sphere spheres [], int ns, Vector &n, Vector &p, Ma
     return hit;
 }
 
-//Vector castRay(Ray ray, Sphere spheres[], int ns, Light lights[], int nl, int depth = 0) {
-Vector castRay(Ray ray, Sphere spheres[], int ns, Light lights[], int nl) {
+Vector castRay(Ray ray, Sphere spheres[], int ns, Light lights[], int nl, int depth = 0) {
     Vector n;  // surface normal
     Vector p;  // surface point
     Material m;
-//    if (depth > 4 || !sceneIntersect(ray, spheres, ns, n, p, m)) {
-    if (!sceneIntersect(ray, spheres, ns, n, p, m)) {
+    if (depth > 1 || !sceneIntersect(ray, spheres, ns, n, p, m)) {
         return {0.2, 0.7, 0.8};  // background
     }
-//    Ray rray;  // reflection ray
-//    rray.d = reflect(ray.d, n);
-//    rray.e = p + rray.d.scale(0.1);
-//    Vector reflect_colour = castRay(rray, spheres, ns, lights, nl, depth+1);
-//    Vector reflect_colour = {0, 0, 0};
+    Ray rray;  // reflection ray
+    rray.d = reflect(ray.d, n);
+    rray.e = p + rray.d.scale(0.1);
+    Vector reflect_colour = castRay(rray, spheres, ns, lights, nl, depth+1);
 
     float diffuse_light_intensity = 0;
     float specular_light_intensity = 0;
@@ -222,8 +219,7 @@ Vector castRay(Ray ray, Sphere spheres[], int ns, Light lights[], int nl) {
         diffuse_light_intensity += lambertianShading(n, lights[k], p);
         specular_light_intensity += phongReflect(ray, n, lights[k], p, m.specular_exponent);
     }
-//    return m.diffuse_colour.scale(diffuse_light_intensity).scale(m.albedo.x) + Vector(1, 1, 1).scale(specular_light_intensity).scale(m.albedo.y) + reflect_colour.scale(m.albedo.z);
-    return m.diffuse_colour.scale(diffuse_light_intensity).scale(m.albedo.x) + Vector(1, 1, 1).scale(specular_light_intensity).scale(m.albedo.y);
+    return m.diffuse_colour.scale(diffuse_light_intensity).scale(m.albedo.x) + Vector(1, 1, 1).scale(specular_light_intensity).scale(m.albedo.y) + reflect_colour.scale(m.albedo.z);
 }
 
 void render(Sphere spheres[], int ns, Light lights[], int nl, int width, int height, float fov, float focal_length) {
@@ -234,7 +230,7 @@ void render(Sphere spheres[], int ns, Light lights[], int nl, int width, int hei
             *img[j * width + i] = castRay(ray, spheres, ns, lights, nl);
         }
     }
-    img.normalizeImage();
+    img.normalizeImage2();
     img.writeImage();
 }
 
@@ -245,10 +241,10 @@ int main() {
     float fov = M_PI / 2;
     Material ivory {{0.6, 0.3, 0.1}, {0.4, 0.4, 0.3}, 50.};
     Material red_rubber {{0.9, 0.1, 0.0}, {0.3, 0.1, 0.1}, 10.};
-    Material mirror {{0.0, 10.0, 0.8}, {1.0, 1.0, 1.0}, 1425.};
+    Material mirror {{0.0, 3.0, 0.8}, {1.0, 1.0, 1.0}, 1425.};
     Sphere spheres [] {{{-3, 0, -16}, 2, ivory},  // centre, radius, material
-                       {{-1, -1.5, -12}, 2, red_rubber},
-                       {{1.5, -0.5, -18}, 3, ivory},
+                       {{-1, -1.5, -12}, 2, mirror},
+                       {{1.5, -0.5, -18}, 3, red_rubber},
                        {{7, 5, -18}, 4, mirror}};
     Light lights [] {{{-20, 20, 20}, 1.5},
                      {{30, 50, -25}, 1.8},
@@ -256,36 +252,5 @@ int main() {
     int ns = sizeof(spheres) / sizeof(*spheres);
     int nl = sizeof(lights) / sizeof(*lights);
     render(spheres, ns, lights, nl, width, height, fov, focal_length);
-//    for (int j = 0; j < height; j++) {
-//        for (int i = 0; i < width; i++) {
-//            Ray ray = computeViewingRayFOV(i, j, width, height, fov, focal_length);
-//            *img[j * width + 1] = castRay(
-//
-//            Vector hit_n;  // hit surface normal
-//            Vector hit_p;  // hit surface point
-//            Vector hit_c;  // hit surface colour
-//            float hit_t;  //  hit intersection
-//            bool hit = checkSurfaces(surfaces, ns, ray, hit_n, hit_p, hit_c, hit_t);
-//            if (hit) {
-//                Vector L = {0, 0, 0};
-//                for (int k = 0; k < sizeof(lights) / sizeof(*lights); k++) {
-//                    L = lambertianShading(hit_n, lights[k], hit_p, hit_c);
-//                    if (!checkShadow(surfaces, ns, hit_p, lights[k])) {
-//                        L = L + lambertianShading(hit_n, lights[k], hit_p, hit_c) + blinnPhongShading(hit_n, lights[k], hit_p, hit_c, ray);
-//                        if (checkReflective(surfaces, ns, hit_p, hit_n, ray, hit_c)) {
-//                            L = L + mirrorReflection(hit_c);
-//                        }
-//                    }
-//                }
-//                *img[j*width+i] = L + ambientShading(hit_c, lights[0].i);  // use first light as ambient
-//                *img[j*width+i] = L;
-//            }
-//            else {
-//                *img[j*width+i] = {0.2, 0.7, 0.8};  // background colour
-//            }
-//        }
-//    }
-//    img.normalizeImage();
-//    img.writeImage();
     return 0;
 }

@@ -44,5 +44,16 @@ class Image {
                 }
             }
         }
+        void normalizeImage2() {
+            for (int j = 0; j < height; j++) {
+                for (int i = 0; i < width; i++) {
+                    float m = (framebuffer[j*width+i].x > framebuffer[j*width+i].y) ? framebuffer[j*width+i].x : framebuffer[j*width+i].y;
+                    m = (m > framebuffer[j*width+i].z) ? m : framebuffer[j*width+i].z;
+                    if (m > 1) {
+                        framebuffer[j*width+i] = {framebuffer[j*width+i].x / m, framebuffer[j*width+i].y / m, framebuffer[j*width+i].z / m};
+                    }
+                }
+            }
+        }
         Vector* operator [] (int i) { return &framebuffer[i]; };
 };
