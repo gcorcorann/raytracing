@@ -14,7 +14,7 @@ class Image {
             framebuffer = new Vector [width * height];  // rgb values
         }
         ~Image() { delete[] framebuffer; };
-        void writeImage() {
+        void write() {
             std::ofstream file;
             file.open("out.ppm", std::ios::binary);
             file << "P6\n" << width << " " << height << "\n255\n";
@@ -27,24 +27,7 @@ class Image {
             }
             file.close();
         }
-        void normalizeImage() {
-            float max = 0;
-            for (int j = 0; j < height; j++) {
-                for (int i = 0; i < width; i++) {
-                    float m = (framebuffer[j*width+i].x > framebuffer[j*width+i].y) ? framebuffer[j*width+i].x : framebuffer[j*width+i].y;
-                    m = (m > framebuffer[j*width+i].z) ? m : framebuffer[j*width+i].z;
-                    max = (max > m) ? max : m;
-                }
-            }
-            if (max != 0) {  // TODO this might be changed to (max > 1)
-                for (int j = 0; j < height; j++) {
-                    for (int i = 0; i < width; i++) {
-                        framebuffer[j*width+i] = {framebuffer[j*width+i].x / max, framebuffer[j*width+i].y / max, framebuffer[j*width+i].z / max};
-                    }
-                }
-            }
-        }
-        void normalizeImage2() {
+        void normalize() {
             for (int j = 0; j < height; j++) {
                 for (int i = 0; i < width; i++) {
                     float m = (framebuffer[j*width+i].x > framebuffer[j*width+i].y) ? framebuffer[j*width+i].x : framebuffer[j*width+i].y;
