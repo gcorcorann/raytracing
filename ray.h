@@ -12,6 +12,6 @@ struct Ray {
         e = step();
     }
     Vector step() {
-        return e + d.scale(1e-6f);  // avoid numeric impresisions
+        return e + d.scale(1e-3f);  // avoid numeric impresisions
     }
 };

@@ -1,5 +1,9 @@
+#include <cassert>
+
 #include "scene.h"
+#include "surface.h"
 #include "sphere.h"
+#include "triangle.h"
 #include "light.h"
 #include "material.h"
 
@@ -17,12 +21,18 @@ int main() {
                        {{1.5, -0.5, -18}, 3, red_rubber},
                        {{7, 5, -18}, 4, mirror}};
     int ns = sizeof(spheres) / sizeof(*spheres);
+    Triangle triangles [] {{{-6, -4, -5}, {6, -4, -5}, {0, -4, -100}, red_rubber}};
+    int nt = sizeof(triangles) / sizeof(*triangles);
+    // TODO do not need addresses
+    Surface* surfaces [] = {&triangles[0], &spheres[0], &spheres[1], &spheres[2], &spheres[3]};
+    int nsf = sizeof(surfaces) / sizeof(*surfaces);
+    assert (nsf == ns + nt);
     Light lights [] {{{-20, 20, 20}, 1.5},
                      {{30, 50, -25}, 1.8},
                      {{30, 20, 30}, 1.7}};
     int nl = sizeof(lights) / sizeof(*lights);
     Scene scene (width, height, fov, focal_length, max_depth);
-    scene.addSurfaces(spheres, ns);
+    scene.addSurfaces(surfaces, nsf);
     scene.addLights(lights, nl);
     scene.render();
     return 0;

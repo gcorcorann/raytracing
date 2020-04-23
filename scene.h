@@ -1,6 +1,6 @@
 #pragma once
 #include "vector.h"
-#include "sphere.h"
+#include "surface.h"
 #include "image.h"
 #include "light.h"
 #include "ray.h"
@@ -11,26 +11,23 @@ private:
     int m_width;
     int m_height;
     float m_fov;
-    float m_focal_length;
-    int m_depth;
-    Sphere* m_spheres;
+    float m_focal_length = 0.f;
+    int m_depth = 0;
+    Surface** m_surfaces = nullptr;
     int m_ns;
-    Light* m_lights;
+    Light* m_lights = nullptr;
     int m_nl;
 public:
     Scene (const int width, const int height, float fov) {
         m_width = width;
         m_height = height;
         m_fov = fov;
-        m_focal_length = 0.f;
-        m_depth = 0;
     }
     Scene (const int width, const int height, float fov, float focal_length) {
         m_width = width;
         m_height = height;
         m_fov = fov;
         m_focal_length = focal_length;
-        m_depth = 0;
     }
     Scene (const int width, const int height, float fov, float focal_length, int depth) {
         m_width = width;
@@ -39,14 +36,12 @@ public:
         m_focal_length = focal_length;
         m_depth = depth;
     }
-
     void pixelImagePlane(int i, int j, float& u, float& v) {
         // image plane boundaries
         float r = tan(m_fov / 2);
         float l = -r;
         float t = r * m_height / m_width;
         float b = -t;
-        // convert pixel to image plane location
         u = l + (r - l) * ((float) i + 0.5) / (float) m_width;
         v = b + (t - b) * ((float) j + 0.5) / (float) m_height;
     }
@@ -64,8 +59,8 @@ public:
     Ray orthographicProjection(float u, float v) {
         return {{u, v, 0}, {0, 0, -1}};
     }
-    void addSurfaces(Sphere* spheres, int ns) {
-        m_spheres = spheres;
+    void addSurfaces(Surface** surfaces, int ns) {
+        m_surfaces = surfaces;
         m_ns = ns;
     }
     void addLights(Light* lights, int nl) {
@@ -78,10 +73,10 @@ public:
         bool hit = false;
         float min_t = -1;
         for (int k = 0; k < m_ns; k++) {
-            if (m_spheres[k].hit(r, tmp_n, tmp_p, t) && (!hit || (t > 0 && t < min_t))) {
+            if (m_surfaces[k]->hit(r, tmp_n, tmp_p, t) && (!hit || (t > 0 && t < min_t))) {
                 hit = true;
                 min_t = t;
-                m = m_spheres[k].material;
+                m = m_surfaces[k]->m_material;
                 n = tmp_n;
                 p = tmp_p;
             }
