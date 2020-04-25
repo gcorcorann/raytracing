@@ -14,7 +14,7 @@ public:
         m_c = c;
         m_material = m;
     }
-    bool hit(Ray r, Vector& n, Vector& p, float& t) {
+    bool hit(Ray r, Vector& n, Vector& p, float& t) override {
         float a = m_a.x - m_b.x;
         float b = m_a.y - m_b.y;
         float c = m_a.z - m_b.z;

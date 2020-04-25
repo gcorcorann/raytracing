@@ -91,14 +91,15 @@ public:
         }
         Ray reflect_ray {{hit_pt}, {reflect(ray.d, hit_norm)}};
         Vector reflect_colour = castRay(reflect_ray, ++depth).scale(hit_mat.albedo.z);
-        Vector diffuse_colour, specular_colour;
+        Vector diffuse_colour, specular_colour, ambient_colour;
         float diffuse_intensity = 0.f;
         float specular_intensity = 0.f;
         shading(ray, hit_norm, hit_pt, hit_mat.specular_exponent, diffuse_intensity, specular_intensity);
         diffuse_colour = hit_mat.diffuse_colour.scale(diffuse_intensity).scale(hit_mat.albedo.x);
-        // white specular colour
         specular_colour = Vector(1.f, 1.f, 1.f).scale(specular_intensity).scale(hit_mat.albedo.y);
-        return diffuse_colour + specular_colour + reflect_colour;
+        reflect_colour = reflect_colour.scale(hit_mat.albedo.z);
+        ambient_colour = hit_mat.diffuse_colour.scale(0.1);
+        return diffuse_colour + specular_colour + reflect_colour + ambient_colour;
     }
     void shading(Ray r, Vector n, Vector p, float e, float& di, float& si) {
         Vector l;

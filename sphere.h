@@ -13,7 +13,7 @@ public:
         m_radius = r;
         m_material = m;
     }
-    bool hit(Ray r, Vector& n, Vector& p, float& t) {
+    bool hit(Ray r, Vector& n, Vector& p, float& t) override {
         float d = sqrt((r.e - m_centre).dot(r.d) * (r.e - m_centre).dot(r.d) - r.d.dot(r.d) * ((r.e - m_centre).dot(r.e - m_centre) - m_radius * m_radius));
         if (d >= 0) {
             float tp = (-(r.e - m_centre).dot(r.d) + d) / r.d.dot(r.d);
